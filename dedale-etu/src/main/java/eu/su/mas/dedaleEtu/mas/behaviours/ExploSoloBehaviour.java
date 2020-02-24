@@ -7,10 +7,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.SingleGraph;
+
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.DataGraphe;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.behaviours.Behaviour;
@@ -34,6 +38,8 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	private static final long serialVersionUID = 8567689731496787661L;
 
 	private boolean finished = false;
+	public String nextNode = null;
+	public boolean letGo = false;
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -48,6 +54,10 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	 * Visited nodes
 	 */
 	private Set<String> closedNodes;
+	
+	public MapRepresentation getMap() {
+		return this.myMap;
+	}
 
 
 	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
@@ -55,6 +65,8 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 		this.myMap=myMap;
 		this.openNodes=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
+		this.letGo = false;
+		
 	}
 
 	@Override
@@ -62,6 +74,9 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 		if(this.myMap==null)
 			this.myMap= new MapRepresentation();
+		//String serialised = DataGraphe.serialize(this.myMap.getGraph());
+		//System.out.println(serialised);
+		//this.myMap.unserialize("14,3_2,2_2-15,3_2,3_1-16,3_2,4_2");
 		
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -69,7 +84,6 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 		if (myPosition!=null){
 			//List of observable from the agent's current position
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-
 			/**
 			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 			 */
@@ -86,7 +100,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			this.myMap.addNode(myPosition,MapAttribute.closed);
 
 			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
-			String nextNode=null;
+			this.nextNode= null;
 			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 			while(iter.hasNext()){
 				String nodeId=iter.next().getLeft();
@@ -99,7 +113,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 						//the node exist, but not necessarily the edge
 						this.myMap.addEdge(myPosition, nodeId);
 					}
-					if (nextNode==null) nextNode=nodeId;
+					if (nextNode==null) nextNode = nodeId;
 				}
 			}
 
@@ -115,7 +129,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				if (nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					nextNode= this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 				}
 				
 				
@@ -126,7 +140,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 				//list of observations associated to the currentPosition
 				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
 				
 				//example related to the use of the backpack for the treasure hunt
 				Boolean b=false;
@@ -169,7 +183,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				((AbstractDedaleAgent)this.myAgent).moveTo(this.nextNode);
 			}
 
 		}
