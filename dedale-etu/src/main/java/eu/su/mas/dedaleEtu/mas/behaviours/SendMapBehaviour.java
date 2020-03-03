@@ -10,59 +10,61 @@ import java.time.*;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.AbstractExploAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import jade.core.AID;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-public class SendMapBehaviour  extends SimpleBehaviour{
+public class SendMapBehaviour  extends OneShotBehaviour{
 
 	private static final long serialVersionUID = -2058134622078521998L;
 
-	private String receiver;
-	private ExploreSoloAgent agent;
+	private AbstractExploAgent agent;
 	
-	public SendMapBehaviour(ExploreSoloAgent myagent,String receiver) {
+	public SendMapBehaviour(AbstractExploAgent myagent) {
 		this.agent= myagent;
-		this.receiver = receiver;
 	}
 	
-	/*
 	@Override
 	public void action() {
-		if(this.agent.myMap!=null) {
+		if(this.agent.getExplo().getMap()!=null) {
 			ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-			message.addReceiver(new AID(this.receiver,AID.ISLOCALNAME));
-			message.setSender(this.agent.getAID());
-			JSONObject jsMap = new JSONObject();
-			jsMap.putAll(this.agent.myMap.getGraph());//on sérialise en JSON le graphe
-			String jsonToSend = myMap.toJSONString();
+			/*start
+			AMSAgentDescription[] agents = null;
 			try {
-				message.setContent(jsonToSend);
-			} catch (IOException e) {
-				e.printStackTrace();
+				SearchConstraints c = new SearchConstraints();
+				c.setMaxResults(new Long(-1));
+				agents = AMSService.search(this.agent,  new AMSAgentDescription(),c);
+			}catch(Exception e) {
+				System.err.println(e);
 			}
-			this.agent.send(message);//envoi de la map
+			for(int i = 0; i<agents.length;i++) {
+				message.addReceiver(agents[i].getName());
+				//System.out.println(agents[i].getName());
+			}
+			end*/
+			if(this.agent.getPing()!=null) {
+				for(AID agent : this.agent.getPing().getTargetList()) {
+					message.addReceiver(agent);
+					//System.out.print("Receiver : "+agent);
+				}
+				message.setSender(this.agent.getAID());
+				message.setContent(this.agent.getExplo().getMap().serialize());//we send serialised graph
+				this.agent.sendMessage(message);
+				System.out.println("Map send : "+message);
+			}
 		}
-	}*/
+	}
 	
-	@Override
-	public void action() {
-		if(this.agent.getMap()!=null) {
-			ACLMessage message = new ACLMessage(ACLMessage.INFORM);
-			message.addReceiver(new AID(this.receiver,AID.ISLOCALNAME));
-			message.setSender(this.agent.getAID());
-			message.setContent(this.agent.getMap().serialize());//we send serialised graph
-			this.agent.sendMessage(message);
-		}
+	public int onEnd() {
+		System.out.println("SEND END -> 0");
+		return 0;
 	}
 
-	
-	@Override
-	public boolean done() {
-		// TODO Auto-generated method stub
-		return false;
-	} 
 }

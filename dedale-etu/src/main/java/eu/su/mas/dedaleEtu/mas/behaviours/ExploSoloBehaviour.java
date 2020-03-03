@@ -1,23 +1,18 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.implementations.SingleGraph;
-
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
-import eu.su.mas.dedaleEtu.mas.knowledge.DataGraphe;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.AbstractExploAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
-import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 
 
@@ -33,13 +28,17 @@ import jade.core.behaviours.SimpleBehaviour;
  * @author hc
  *
  */
-public class ExploSoloBehaviour extends SimpleBehaviour {
+public class ExploSoloBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
 
 	private boolean finished = false;
-	public String nextNode = null;
+	private String nextNode = null;
 	public boolean letGo = false;
+	
+	public String getNextNode() {
+		return this.nextNode;
+	}
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -55,17 +54,23 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	 */
 	private Set<String> closedNodes;
 	
+	private List<String> lastNodes;
+	
 	public MapRepresentation getMap() {
 		return this.myMap;
 	}
 
+	public List<String> getLastMoves() {
+		return this.lastNodes;
+	}
 
-	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
+	public ExploSoloBehaviour(final AbstractExploAgent myagent) {
 		super(myagent);
-		this.myMap=myMap;
+		this.myMap=myagent.getMap();
 		this.openNodes=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
 		this.letGo = false;
+		this.lastNodes = new ArrayList<String>();
 		
 	}
 
@@ -183,15 +188,22 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
+				if(!this.lastNodes.contains(this.nextNode)) {//we save the 10 last moves
+					this.lastNodes.add(this.nextNode);
+					if(this.lastNodes.size()>10) {
+						this.lastNodes.remove(0);
+					}
+				}
 				((AbstractDedaleAgent)this.myAgent).moveTo(this.nextNode);
 			}
 
 		}
 	}
-
-	@Override
-	public boolean done() {
-		return finished;
+	
+	public int onEnd() {
+		System.out.println("PING END -> 0");
+		return 0;
 	}
+
 
 }

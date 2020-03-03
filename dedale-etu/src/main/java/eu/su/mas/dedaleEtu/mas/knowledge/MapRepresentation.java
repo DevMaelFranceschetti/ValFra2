@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javafx.application.Platform;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -35,7 +36,7 @@ public class MapRepresentation implements Serializable {
 	 */
 
 	public enum MapAttribute {
-		agent,open,closed,territory
+		agent,open,closed,territory, received
 	}
 
 	private static final long serialVersionUID = -1333959882640838272L;
@@ -47,8 +48,9 @@ public class MapRepresentation implements Serializable {
 	private String defaultNodeStyle= "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
 	private String nodeStyle_open = "node.agent {"+"fill-color: forestgreen;"+"}";
 	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
+	private String nodeStyle_received = "node.received {"+"fill-color: red;"+"}";
 	private String nodeStyle_territory = "node.territory {"+"fill-color: red;"+"}";
-	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open+nodeStyle_territory;
+	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open+nodeStyle_territory+nodeStyle_received;
 
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
@@ -66,7 +68,7 @@ public class MapRepresentation implements Serializable {
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 		
-		openGui();
+		Platform.runLater(() -> {openGui();});//openGui();
 		
 		//this.viewer = this.g.display();
 
@@ -103,7 +105,6 @@ public class MapRepresentation implements Serializable {
 			//Do not add an already existing one
 			this.nbEdges--;
 		}
-
 	}
 	
 	/**
@@ -111,16 +112,19 @@ public class MapRepresentation implements Serializable {
 	 * @param str, the string describing a graph or a part of graph serialised
 	 */
 	public void unserialize(String str) {
-		String[] edges = str.split("-");
-		for(String edge : edges) {
-			String[] ids = edge.split(",");
-			System.out.println(ids.toString());
-			addNode(ids[1],MapAttribute.open);
-			addNode(ids[2],MapAttribute.open);
-			addEdge(ids[1],ids[2]);
+		if(str !=null) {
+			System.out.println("Message Unserialize : "+str);
+			String[] edges = str.split("-");
+			for(String edge : edges) {
+				String[] ids = edge.split(",");
+				//System.out.println(ids.toString());
+				addNode(ids[1],MapAttribute.received);
+				addNode(ids[2],MapAttribute.received);
+				addEdge(ids[1],ids[2]);
+			}
 		}
 	}
-	
+
 	/**
 	 * return the map graph as a serialised String
 	 */
