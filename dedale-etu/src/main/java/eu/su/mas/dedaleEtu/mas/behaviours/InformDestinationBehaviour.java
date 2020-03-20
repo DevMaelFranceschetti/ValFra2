@@ -10,7 +10,6 @@ import java.time.*;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import jade.core.AID;
 import jade.core.behaviours.SimpleBehaviour;
@@ -34,8 +33,8 @@ public class InformDestinationBehaviour  extends SimpleBehaviour{
 		ACLMessage message = new ACLMessage(ACLMessage.INFORM);
 		message.addReceiver(new AID(this.receiver,AID.ISLOCALNAME));
 		message.setSender(this.agent.getAID());
-		message.setContent(this.agent.getCurrentPosition()+","+this.agent.explo.nextNode);//envoie la case où il est, où il veut aller
-		System.out.println("Send message : "+this.agent.getCurrentPosition()+","+this.agent.explo.nextNode);
+		message.setContent(this.agent.getCurrentPosition()+","+this.agent.getExplo().getNextNode());//envoie la case où il est, où il veut aller
+		System.out.println("Send message : "+this.agent.getCurrentPosition()+","+this.agent.getExplo().getNextNode());
 		this.agent.sendMessage(message);
 	}
 

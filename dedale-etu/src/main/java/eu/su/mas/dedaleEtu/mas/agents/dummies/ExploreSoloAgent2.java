@@ -22,10 +22,12 @@ import jade.core.behaviours.Behaviour;
  *
  */
 
-public class ExploreSoloAgent extends AbstractExploAgent {
+public class ExploreSoloAgent2 extends AbstractExploAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
-	
+	public MapRepresentation myMap;
+	public boolean letGo = false;
+
 	
 
 	/**
@@ -38,10 +40,9 @@ public class ExploreSoloAgent extends AbstractExploAgent {
 	protected void setup(){
 
 		super.setup();
-		
 
 		List<Behaviour> lb=new ArrayList<Behaviour>();
-		
+
 		/************************************************
 		 * 
 		 * ADD the behaviours of the Dummy Moving Agent
@@ -53,19 +54,15 @@ public class ExploreSoloAgent extends AbstractExploAgent {
 		lb.add(this.ping);
 		lb.add(new SendMapBehaviour(this));
 		lb.add(new ReceiveMapBehaviour(this));
-		
-		
+
 		/***
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY
 		 */
-		
-		
+
 		addBehaviour(new startMyBehaviours(this,lb));
-		
+
 		System.out.println("the  agent "+this.getLocalName()+ " is started");
 
 	}
-	
-	
-	
+
 }

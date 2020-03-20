@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javafx.application.Platform;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -17,6 +18,7 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 
 /**
  * <pre>
@@ -35,20 +37,23 @@ public class MapRepresentation implements Serializable {
 	 */
 
 	public enum MapAttribute {
-		agent,open,closed,territory
+		agent,open,closed,territory, received
 	}
 
 	private static final long serialVersionUID = -1333959882640838272L;
+	private ExploSoloBehaviour explo;
 	
 	/*********************************
 	 * Parameters for graph rendering
 	 ********************************/
 
 	private String defaultNodeStyle= "node {"+"fill-color: black;"+" size-mode:fit;text-alignment:under; text-size:14;text-color:white;text-background-mode:rounded-box;text-background-color:black;}";
-	private String nodeStyle_open = "node.agent {"+"fill-color: forestgreen;"+"}";
-	private String nodeStyle_agent = "node.open {"+"fill-color: blue;"+"}";
+	private String nodeStyle_agent = "node.agent {"+"fill-color: forestgreen;"+"}";
+	private String nodeStyle_open = "node.open {"+"fill-color: blue;"+"}";
+	private String nodeStyle_closed = "node.closes {"+"fill-color: black;"+"}";
+	private String nodeStyle_received = "node.received {"+"fill-color: red;"+"}";
 	private String nodeStyle_territory = "node.territory {"+"fill-color: red;"+"}";
-	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open+nodeStyle_territory;
+	private String nodeStyle=defaultNodeStyle+nodeStyle_agent+nodeStyle_open+nodeStyle_territory+nodeStyle_received+nodeStyle_closed;
 
 	private Graph g; //data structure non serializable
 	private Viewer viewer; //ref to the display,  non serializable
@@ -60,13 +65,14 @@ public class MapRepresentation implements Serializable {
 		return this.sg;
 	}
 	
-	public MapRepresentation() {
+	public MapRepresentation(ExploSoloBehaviour explo) {
+		this.explo = explo;
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
 		System.setProperty("org.graphstream.ui", "javafx");
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 		
-		openGui();
+		Platform.runLater(() -> {openGui();});//openGui();
 		
 		//this.viewer = this.g.display();
 
@@ -79,15 +85,28 @@ public class MapRepresentation implements Serializable {
 	 * @param mapAttribute associated state of the node
 	 */
 	public void addNode(String id,MapAttribute mapAttribute){
+		//ADDED : si un noeud est envoyé comme ouvert alors qu'on l'avais visité et fermé, garder l'ancienne info ! 
+		//ADDED : ajouter les noeuds ouverts à openNodes
 		Node n;
 		if (this.g.getNode(id)==null){
 			n=this.g.addNode(id);
+			n.clearAttributes();
+			n.setAttribute("ui.class", mapAttribute.toString());
+			n.setAttribute("ui.label",id);
+			if(mapAttribute==MapAttribute.open) {//on prend en compte le nouvel attribut seulement si le noeud était ouvert
+				this.explo.addOpenNode(id);//le noeud est ouvert
+			}	
 		}else{
 			n=this.g.getNode(id);
+			//un noeud fermé ne peut pas redevenir ouvert :
+			if("open".equalsIgnoreCase((String)n.getAttribute("ui.class")) && mapAttribute.toString().equalsIgnoreCase("closed")) {//on prend en compte le nouvel attribut seulement si le noeud était ouvert
+				n.clearAttributes();
+				n.setAttribute("ui.class", "closed");
+				n.setAttribute("ui.label",id);
+				this.explo.removeOpenNode(id);//le noeud est fermé
+			}	
 		}
-		n.clearAttributes();
-		n.setAttribute("ui.class", mapAttribute.toString());
-		n.setAttribute("ui.label",id);
+		
 	}
 
 	/**
@@ -103,7 +122,6 @@ public class MapRepresentation implements Serializable {
 			//Do not add an already existing one
 			this.nbEdges--;
 		}
-
 	}
 	
 	/**
@@ -111,16 +129,23 @@ public class MapRepresentation implements Serializable {
 	 * @param str, the string describing a graph or a part of graph serialised
 	 */
 	public void unserialize(String str) {
-		String[] edges = str.split("-");
-		for(String edge : edges) {
-			String[] ids = edge.split(",");
-			System.out.println(ids.toString());
-			addNode(ids[1],MapAttribute.open);
-			addNode(ids[2],MapAttribute.open);
-			addEdge(ids[1],ids[2]);
+		if(str !=null) {
+			System.out.println("Message Unserialize : "+str);
+			String[] edges = str.split("-");
+			for(String edge : edges) {
+				String[] ids = edge.split(",");
+				//System.out.println(ids.toString());
+				String node1 = ids[1];
+				String node2 = ids[3];
+				MapAttribute att1 = "open".equalsIgnoreCase(ids[2])?MapAttribute.open:MapAttribute.closed;
+				MapAttribute att2 = "open".equalsIgnoreCase(ids[4])?MapAttribute.open:MapAttribute.closed;
+				addNode(node1,att1);
+				addNode(node2,att2);
+				addEdge(node1,node2);
+			}
 		}
 	}
-	
+
 	/**
 	 * return the map graph as a serialised String
 	 */
@@ -132,15 +157,16 @@ public class MapRepresentation implements Serializable {
 			Edge e=iterE.next();
 			Node sn=e.getSourceNode();
 			Node tn=e.getTargetNode();
-			//MapAttribute typeSn = (MapAttribute)sn.getAttribute("ui.class");
-			//MapAttribute typeTn = (MapAttribute)tn.getAttribute("ui.class");
 			if(!isFirst) {
 				serialised+="-";
 			}
 			else {
 				isFirst = false;
 			}
-			serialised+= e.getId()+","+sn.getId()+","+tn.getId();
+			//System.out.println(sn.getAttribute("ui.class"));
+			String att1 = (String) sn.getAttribute("ui.class");
+			String att2 = (String) tn.getAttribute("ui.class");
+			serialised+= e.getId()+","+sn.getId()+","+att1+","+tn.getId()+","+att2;
 		}
 		return serialised;
 	}
@@ -154,12 +180,101 @@ public class MapRepresentation implements Serializable {
 	 */
 	public List<String> getShortestPath(String idFrom,String idTo){
 		List<String> shortestPath=new ArrayList<String>();
-
 		Dijkstra dijkstra = new Dijkstra();//number of edge
 		dijkstra.init(g);
 		dijkstra.setSource(g.getNode(idFrom));
 		dijkstra.compute();//compute the distance to all nodes from idFrom
 		List<Node> path=dijkstra.getPath(g.getNode(idTo)).getNodePath(); //the shortest path from idFrom to idTo
+		Iterator<Node> iter=path.iterator();
+		while (iter.hasNext()){
+			shortestPath.add(iter.next().getId());
+		}
+		dijkstra.clear();
+		shortestPath.remove(0);//remove the current position
+		return shortestPath;
+	}
+	/**
+	 * Compute new path taking account of obstacle
+	 * 
+	 * @param idFrom id of the origin node
+	 * @param idTo id of the destination node
+	 * @return the list of nodes to follow
+	 */
+	public List<String> computeNewPath(String idFrom, String actual, String obstacle, List<String> openNodes){
+		List<String> shortestPath=new ArrayList<String>();
+		if(openNodes.contains(obstacle)) {
+			openNodes.remove(obstacle);
+		}
+		Iterator<Edge> iterE=this.g.edges().iterator();
+		boolean found = false;
+		while (iterE.hasNext() && found == false){
+			Edge e=iterE.next();
+			Node sn=e.getSourceNode();
+			Node tn=e.getTargetNode();
+			if((tn.toString().equalsIgnoreCase(actual)&&sn.toString().equalsIgnoreCase(obstacle))
+					|| (tn.toString().equalsIgnoreCase(obstacle)&&sn.toString().equalsIgnoreCase(actual))) {
+				found = true;
+			}
+		}
+		if(found) {
+			g.removeEdge(actual, obstacle); //on retire l'arc vers l'obstacle
+		}
+		//Node obs = g.removeNode(obstacle); // on retire le noeud obstacle
+		Dijkstra dijkstra = new Dijkstra();//number of edge
+		dijkstra.init(g);
+		dijkstra.setSource(g.getNode(idFrom));
+		dijkstra.compute();//compute the distance to all nodes from idFrom
+		String nearest = "";
+		double nearest_distance = 10000000000000000.0;//arbitrairement grand, il faudrait mettre infini mais bon...
+		for(String node : openNodes) {//on regarde tous les noeuds ouverts
+			double length_n = dijkstra.getPathLength(g.getNode(node));//on calcule la longueur du chemin jusqu'à ce noeud ouvert
+			if(length_n < nearest_distance) {
+				nearest = node;
+				nearest_distance = length_n;
+			}
+		}
+		List<Node> path=dijkstra.getPath(g.getNode(nearest)).getNodePath(); //the shortest path from idFrom to idTo
+		Iterator<Node> iter=path.iterator();
+		while (iter.hasNext()){
+			shortestPath.add(iter.next().getId());
+		}
+		dijkstra.clear();
+		shortestPath.remove(0);//remove the current position
+		if(found) {
+			addEdge(actual, obstacle);//on remet l'arc vers l'obstacle
+		}
+		//Node n = g.addNode(obstacle); //on remet le noeud obstacle
+		//n.clearAttributes();
+		//n.setAttribute("ui.class", obs.getAttribute("ui.class"));
+		//n.setAttribute("ui.label",obs.getAttribute("ui.label"));
+		openNodes.add(obstacle);
+		return shortestPath;
+	}
+	
+	/**
+	 * Compute the shortest Path from idFrom to the nearest open node. The computation is currently not very efficient
+	 * 
+	 * @param idFrom id of the origin node
+	 * @param idTo id of the destination node
+	 * @return the list of nodes to follow
+	 */
+	public List<String> getNearestTargetShortestPath(String idFrom, List<String> openNodes){
+		List<String> shortestPath=new ArrayList<String>();
+
+		Dijkstra dijkstra = new Dijkstra();//number of edge
+		dijkstra.init(g);
+		dijkstra.setSource(g.getNode(idFrom));
+		dijkstra.compute();//compute the distance to all nodes from idFrom
+		String nearest = "";
+		double nearest_distance = 10000000000000000.0;//arbitrairement grand, il faudrait mettre infini mais bon...
+		for(String node : openNodes) {//on regarde tous les noeuds ouverts
+			double length_n = dijkstra.getPathLength(g.getNode(node));//on calcule la longueur du chemin jusqu'à ce noeud ouvert
+			if(length_n < nearest_distance) {
+				nearest = node;
+				nearest_distance = length_n;
+			}
+		}
+		List<Node> path=dijkstra.getPath(g.getNode(nearest)).getNodePath(); //the shortest path from idFrom to idTo
 		Iterator<Node> iter=path.iterator();
 		while (iter.hasNext()){
 			shortestPath.add(iter.next().getId());

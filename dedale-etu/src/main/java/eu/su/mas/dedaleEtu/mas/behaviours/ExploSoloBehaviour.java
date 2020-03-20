@@ -1,23 +1,18 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.implementations.SingleGraph;
-
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
-import eu.su.mas.dedaleEtu.mas.knowledge.DataGraphe;
+import eu.su.mas.dedaleEtu.mas.agents.dummies.AbstractExploAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
-import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 
 
@@ -33,14 +28,19 @@ import jade.core.behaviours.SimpleBehaviour;
  * @author hc
  *
  */
-public class ExploSoloBehaviour extends SimpleBehaviour {
+public class ExploSoloBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
 
 	private boolean finished = false;
-	public String nextNode = null;
+	private String nextNode = null;
 	public boolean letGo = false;
-
+	private AbstractExploAgent agent;
+	
+	public String getNextNode() {
+		return this.nextNode;
+	}
+	
 	/**
 	 * Current knowledge of the agent regarding the environment
 	 */
@@ -55,17 +55,37 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	 */
 	private Set<String> closedNodes;
 	
+	private List<String> lastNodes;
+	
 	public MapRepresentation getMap() {
 		return this.myMap;
 	}
 
+	public List<String> getLastMoves() {
+		return this.lastNodes;
+	}
+	
+	public void addOpenNode(String node) {
+		if (!this.openNodes.contains(node)){
+			this.openNodes.add(node);
+		}
+	}
+	
+	public void removeOpenNode(String node) {
+		if(this.openNodes.contains(node)) {
+			this.openNodes.remove(node);
+		}
+		this.closedNodes.add(node);
+	}
 
-	public ExploSoloBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap) {
+	public ExploSoloBehaviour(final AbstractExploAgent myagent) {
 		super(myagent);
-		this.myMap=myMap;
+		this.agent = myagent;
+		this.myMap=myagent.getMap();
 		this.openNodes=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
 		this.letGo = false;
+		this.lastNodes = new ArrayList<String>();
 		
 	}
 
@@ -73,7 +93,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	public void action() {
 
 		if(this.myMap==null)
-			this.myMap= new MapRepresentation();
+			this.myMap= new MapRepresentation(this);
 		//String serialised = DataGraphe.serialize(this.myMap.getGraph());
 		//System.out.println(serialised);
 		//this.myMap.unserialize("14,3_2,2_2-15,3_2,3_1-16,3_2,4_2");
@@ -121,16 +141,29 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			if (this.openNodes.isEmpty()){
 				//Explo finished
 				finished=true;
-				System.out.println("Exploration successufully done, behaviour removed.");
+				System.out.println(this.agent.getName()+" : Exploration successufully done, behaviour removed.");
 			}else{
 				//4) select next move.
 				//4.1 If there exist one open node directly reachable, go for it,
 				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-				if (nextNode==null){
+				if (nextNode==null || this.agent.isCollision()){//si on doit définir le prochain déplacement ou qu'il y a collision
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode= this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					//old : nextNode= this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					
+					//On veut aller au plus proche noeud ouvert : 
+					if(this.agent.isCollision()) {
+						System.out.println(this.agent.getName()+": OBSTACLE TAKEN IN ACCOUNT");
+						nextNode= this.myMap.computeNewPath(myPosition, this.agent.getActual(), this.agent.getCollision(), this.openNodes).get(0);
+						this.agent.resetCollision();//collision prise en compte
+					}
+					else {
+						nextNode= this.myMap.getNearestTargetShortestPath(myPosition, this.openNodes).get(0);
+					}
 				}
+				/*else {
+					System.out.println(this.agent.getName()+" : NextNode not null and no collision");
+				}*/
 				
 				
 				
@@ -183,15 +216,22 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
+				if(!this.lastNodes.contains(this.nextNode)) {//we save the 10 last moves
+					this.lastNodes.add(this.nextNode);
+					if(this.lastNodes.size()>10) {
+						this.lastNodes.remove(0);
+					}
+				}
 				((AbstractDedaleAgent)this.myAgent).moveTo(this.nextNode);
 			}
 
 		}
 	}
-
-	@Override
-	public boolean done() {
-		return finished;
+	
+	public int onEnd() {
+		//System.out.println(this.myAgent.getName()+": EXPLO END -> 0");
+		return 0;
 	}
+
 
 }
