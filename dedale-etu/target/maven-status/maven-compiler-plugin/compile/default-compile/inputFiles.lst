@@ -1,0 +1,16 @@
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/ExploreSoloAgent.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/ExploreMultiAgent.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/SayHello.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/SendMapBehaviour.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ExploMultiBehaviour.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/princ/Principal.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ExploSoloBehaviour.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/ExploreSoloAgent2.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyMovingAgent.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/princ/ConfigurationFile.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyTankerAgent.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/RandomWalkBehaviour.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/knowledge/MapRepresentation.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/CentraliseMapBehaviour.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyCollectorAgent.java
+/users/nfs/Etu1/3872061/git/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ReceiveMapBehaviour.java
