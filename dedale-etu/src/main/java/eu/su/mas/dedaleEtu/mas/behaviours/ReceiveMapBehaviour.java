@@ -7,8 +7,6 @@ import java.time.*;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AbstractExploAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent2;
 import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
@@ -33,12 +31,11 @@ public class ReceiveMapBehaviour  extends OneShotBehaviour{
 		if(message!=null) {
 			String data = message.getContent();
 			this.agent.getExplo().getMap().unserialize(data);
-			System.out.println("msg received : "+data);
+			System.err.println(this.agent.getName()+": msg received : "+data);
 		}
 	}
 	
 	public int onEnd() {
-		//System.out.println("REC END -> 0");
 		return 0;
 	}
 

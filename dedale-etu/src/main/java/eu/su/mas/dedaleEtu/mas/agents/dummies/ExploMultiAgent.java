@@ -1,14 +1,17 @@
 package eu.su.mas.dedaleEtu.mas.agents.dummies;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
-import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.PingBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour_new2;
+import eu.su.mas.dedaleEtu.mas.behaviours.PingBehaviour_coalition;
 import eu.su.mas.dedaleEtu.mas.behaviours.ReceiveMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.strategy.BossStrategy;
+import eu.su.mas.dedaleEtu.mas.strategy.ExploSoloStrategy;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.FSMBehaviour;
 
@@ -29,6 +32,15 @@ public class ExploMultiAgent extends AbstractExploAgent {
 
 	private SendMapBehaviour sendMap;
 	private ReceiveMapBehaviour receiveMap;
+	private String supposedPosition;
+
+	public String getSupposedPos() {
+		return this.supposedPosition;
+	}
+	
+	public void setSupposedPos(String pos) {
+		this.supposedPosition = pos;
+	}
 	
 	
 	/**
@@ -41,7 +53,8 @@ public class ExploMultiAgent extends AbstractExploAgent {
 	protected void setup(){
 
 		super.setup();
-		
+		this.strategie_explo_solo = new ExploSoloStrategy();
+		this.bossStrat = new BossStrategy();
 		this.timeCounter = 0;
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
@@ -50,10 +63,14 @@ public class ExploMultiAgent extends AbstractExploAgent {
 		 * ADD the behaviours of the Dummy Moving Agent
 		 * 
 		 ************************************************/
-		this.explo = new ExploSoloBehaviour(this);
-		this.ping = new PingBehaviour(this);
+		this.explo = new ExploSoloBehaviour_new2(this);
+		this.ping = new PingBehaviour_coalition(this);
 		this.sendMap = new SendMapBehaviour(this);
 		this.receiveMap = new ReceiveMapBehaviour(this);
+		this.supposedPosition = this.getCurrentPosition();
+		this.wumpus = new HashMap<>();
+		this.stench = new ArrayList<>();
+
 		
 		FSMBehaviour fsm = new FSMBehaviour(this);
 		final String EXPLO = "Explo";
@@ -61,8 +78,8 @@ public class ExploMultiAgent extends AbstractExploAgent {
 		final String SEND = "Send";
 		final String REC = "Receive";
 		//on défini les états :
-		fsm.registerFirstState(this.ping,PING);
-		fsm.registerState(this.explo,EXPLO);
+		fsm.registerFirstState((Behaviour) this.ping,PING);
+		fsm.registerState((Behaviour) this.explo,EXPLO);
 		fsm.registerState(this.sendMap,SEND);
 		fsm.registerState(this.receiveMap,REC);
 		//on défini les transitions :
