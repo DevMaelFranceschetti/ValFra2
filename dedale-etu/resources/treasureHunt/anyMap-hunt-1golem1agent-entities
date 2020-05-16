@@ -1,4 +1,8 @@
 mapname:mapHunt
-agentExplo:Send:1:free:-1:0:0:0:0
-agentExplo:Receive:1:free:-1:0:0:0:0
+agentExplo:Explo1:1:free:-1:0:0:0:0
+agentExplo:Explo2:1:free:-1:0:0:0:0
+agentExplo:Explo3:1:free:-1:0:0:0:0
+agentExplo:Explo4:1:free:-1:0:0:0:0
+agentExplo:Explo5:1:free:-1:0:0:0:0
+agentExplo:Explo6:1:free:-1:0:0:0:0
 wumpus:Golem:0:free:-1:0:1:0:0
